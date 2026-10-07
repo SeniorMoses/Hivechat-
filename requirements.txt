@@ -1,0 +1,17 @@
+# Web framework
+fastapi
+uvicorn[standard]
+gunicorn
+# Database
+sqlalchemy
+aiosqlite
+
+# Data validation
+pydantic[email]
+
+# Authentication & security
+PyJWT
+bcrypt
+
+# Form / OAuth2 support
+python-multipart
