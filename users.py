@@ -20,7 +20,7 @@ from websocket import manager
 router = APIRouter()
 
 
-@router.post("/signup", response_model=TokenResponse)
+@router.post("/signup", response_model=LoginResponse)
 async def signup(
     data: SignupRequest,
     db: AsyncSession = Depends(get_db),
@@ -59,7 +59,7 @@ async def signup(
     }
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=LoginResponse)
 async def login(
     data: LoginRequest,
     db: AsyncSession = Depends(get_db),
