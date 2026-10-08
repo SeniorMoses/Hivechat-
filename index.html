@@ -872,15 +872,16 @@
     <script>
 
                 const state = {
-            token: localStorage.getItem("access_token"),
-            mode: "login",
-            currentUserId: null,
-            selectedUser: null,
-            users: [],
-            socket: null,
-            reconnectTimer: null,
-            reconnectAttempts: 0
-        };
+    token: localStorage.getItem("access_token"),
+    mode: "login",
+    currentUserId: null,
+    selectedUser: null,
+    users: [],
+    socket: null,
+    reconnectTimer: null,
+    reconnectAttempts: 0,
+    messages: {}
+};
 
 
         const authScreen =
@@ -1567,7 +1568,14 @@
 
             messagesContainer.innerHTML = "";
 
+           const userMessages =
+    state.messages[user.id] || [];
 
+    userMessages.forEach(message => {
+    renderMessage(message);
+    });
+
+    scrollMessagesToBottom();
             messageInput.disabled = false;
 
             messageInput.focus();
@@ -1798,45 +1806,91 @@
 
         function handleIncomingMessage(data) {
 
-            const isCurrentConversation =
-                state.selectedUser &&
-                Number(data.sender_id) ===
-                    Number(state.selectedUser.id);
+    const senderId =
+        Number(data.sender_id);
 
 
-            if (!isCurrentConversation) {
-                return;
-            }
+    if (!state.messages[senderId]) {
+        state.messages[senderId] = [];
+    }
 
 
-            renderMessage({
-                id: data.id,
-                sender_id: data.sender_id,
-                receiver_id: data.receiver_id,
-                content: data.content,
-                delivered: data.delivered,
-                read: data.read || false
-            });
+    const alreadyExists =
+        state.messages[senderId].some(
+            message =>
+                Number(message.id) ===
+                Number(data.id)
+        );
 
 
-            scrollMessagesToBottom();
-        }
+    if (!alreadyExists) {
+
+        state.messages[senderId].push({
+            id: data.id,
+            sender_id: data.sender_id,
+            receiver_id: data.receiver_id,
+            content: data.content,
+            delivered: data.delivered,
+            read: data.read || false
+        });
+    }
+
+
+    const isCurrentConversation =
+        state.selectedUser &&
+        Number(data.sender_id) ===
+            Number(state.selectedUser.id);
+
+
+    if (!isCurrentConversation) {
+        return;
+    }
+
+
+    renderMessage(data);
+
+    scrollMessagesToBottom();
+    }
 
 
         function handleSentMessage(data) {
 
-            renderMessage({
-                id: data.id,
-                sender_id: state.currentUserId,
-                receiver_id: data.receiver_id,
-                content: data.content,
-                delivered: data.delivered,
-                read: false
-            });
+    const receiverId =
+        Number(data.receiver_id);
 
 
-            scrollMessagesToBottom();
-        }
+    if (!state.messages[receiverId]) {
+        state.messages[receiverId] = [];
+    }
+
+
+    const message = {
+        id: data.id,
+        sender_id: state.currentUserId,
+        receiver_id: data.receiver_id,
+        content: data.content,
+        delivered: data.delivered,
+        read: false
+    };
+
+
+    const alreadyExists =
+        state.messages[receiverId].some(
+            existing =>
+                Number(existing.id) ===
+                Number(message.id)
+        );
+
+
+    if (!alreadyExists) {
+        state.messages[receiverId].push(message);
+    }
+
+
+    renderMessage(message);
+
+    scrollMessagesToBottom();
+    }
 
 
         function renderMessage(message) {
