@@ -3,7 +3,7 @@ fastapi
 uvicorn[standard]
 gunicorn
 # Database
-sqlalchemy
+sqlalchemy[asyncio]
 aiosqlite
 
 # Data validation
