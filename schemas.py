@@ -21,7 +21,7 @@ class SignupRequest(BaseModel):
             raise ValueError(
             "password must contain a digit" 
             )
-                
+        return pas
 
 
 class LoginRequest(BaseModel):
