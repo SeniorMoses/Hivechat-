@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ChatApp</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0b141a;
+            --sidebar: #111b21;
+            --header: #202c33;
+            --input: #2a3942;
+            --green: #00a884;
+            --green-dark: #008f72;
+            --sent: #005c4b;
+            --received: #202c33;
+            --text: #e9edef;
+            --muted: #8696a0;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont,
+                "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        button,
+        input {
+            font: inherit;
+            border: none;
+            outline: none;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        /* ================= AUTH ================= */
+
+        .auth-screen {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background:
+                radial-gradient(
+                    circle at top,
+                    rgba(0,168,132,.15),
+                    transparent 45%
+                ),
+                var(--bg);
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 420px;
+            background: var(--sidebar);
+            border-radius: 18px;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.35);
+        }
+
+        .auth-logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--green);
+            display: grid;
+            place-items: center;
+            font-size: 30px;
+            margin: 0 auto 18px;
+        }
+
+        .auth-box h1 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .auth-subtitle {
+            text-align: center;
+            color: var(--muted);
+            margin-bottom: 28px;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+        }
+
+        .auth-form input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            background: var(--input);
+            color: var(--text);
+        }
+
+        .primary-btn {
+            padding: 14px;
+            border-radius: 10px;
+            background: var(--green);
+            color: white;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .primary-btn:hover {
+            background: var(--green-dark);
+        }
+
+        .auth-switch {
+            text-align: center;
+            color: var(--muted);
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .auth-switch button {
+            background: none;
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        .error {
+            color: #ff6b6b;
+            font-size: 13px;
+            text-align: center;
+            min-height: 18px;
+        }
+
+        /* ================= APP ================= */
+
+        .app {
+            height: 100vh;
+            display: none;
+        }
+
+        .app.visible {
+            display: flex;
+        }
+
+        /* ================= SIDEBAR ================= */
+
+        .sidebar {
+            width: 350px;
+            background: var(--sidebar);
+            border-right: 1px solid rgba(255,255,255,.06);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            height: 65px;
+            background: var(--header);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+        }
+
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--green);
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+        }
+
+        .profile-name {
+            font-weight: 600;
+        }
+
+        .logout {
+            background: transparent;
+            color: var(--muted);
+            font-size: 18px;
+        }
+
+        .search {
+            padding: 10px;
+            background: var(--sidebar);
+        }
+
+        .search input {
+            width: 100%;
+            padding: 11px 15px;
+            border-radius: 9px;
+            background: var(--input);
+            color: var(--text);
+        }
+
+        .users {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 16px;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .user:hover,
+        .user.active {
+            background: var(--header);
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-weight: 600;
+        }
+
+        .user-status {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        /* ================= CHAT ================= */
+
+        .chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background:
+                radial-gradient(
+                    circle at top,
+                    rgba(0,168,132,.04),
+                    transparent 45%
+                ),
+                var(--bg);
+        }
+
+        .chat-header {
+            height: 65px;
+            background: var(--header);
+            display: flex;
+            align-items: center;
+            padding: 0 18px;
+            gap: 12px;
+        }
+
+        .chat-user-name {
+            font-weight: 600;
+        }
+
+        .chat-user-status {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .welcome {
+            margin: auto;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .welcome-icon {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 9px 12px;
+            border-radius: 9px;
+            position: relative;
+            word-wrap: break-word;
+            animation: appear .15s ease;
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.sent {
+            align-self: flex-end;
+            background: var(--sent);
+            border-top-right-radius: 2px;
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background: var(--received);
+            border-top-left-radius: 2px;
+        }
+
+        .message-text {
+            margin-right: 55px;
+            white-space: pre-wrap;
+        }
+
+        .message-time {
+            position: absolute;
+            right: 8px;
+            bottom: 5px;
+            color: rgba(255,255,255,.55);
+            font-size: 10px;
+        }
+
+        .tick {
+            color: #53bdeb;
+            margin-left: 3px;
+        }
+
+        .composer {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            background: var(--header);
+        }
+
+        .composer input {
+            flex: 1;
+            padding: 13px 17px;
+            border-radius: 25px;
+            background: var(--input);
+            color: var(--text);
+        }
+
+        .send {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--green);
+            color: white;
+            font-size: 18px;
+        }
+
+        .send:hover {
+            background: var(--green-dark);
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 700px) {
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .chat {
+                display: none;
+            }
+
+            .app.chat-open .sidebar {
+                display: none;
+            }
+
+            .app.chat-open .chat {
+                display: flex;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ================= AUTH ================= -->
+
+<div id="authScreen" class="auth-screen">
+
+    <div class="auth-box">
+
+        <div class="auth-logo">💬</div>
+
+        <h1 id="authTitle">Welcome back</h1>
+
+        <p
+            id="authSubtitle"
+            class="auth-subtitle"
+        >
+            Login to continue chatting
+        </p>
+
+        <form
+            id="authForm"
+            class="auth-form"
+        >
+
+            <input
+                id="username"
+                type="text"
+                placeholder="Username"
+                required
+            >
+
+            <input
+                id="email"
+                type="email"
+                placeholder="Email"
+                style="display:none"
+            >
+
+            <input
+                id="password"
+                type="password"
+                placeholder="Password"
+                required
+            >
+
+            <button
+                class="primary-btn"
+                type="submit"
+            >
+                <span id="authButton">
+                    Login
+                </span>
+            </button>
+
+            <div
+                id="authError"
+                class="error"
+            ></div>
+
+        </form>
+
+        <div class="auth-switch">
+
+            <span id="switchText">
+                Don't have an account?
+            </span>
+
+            <button
+                id="switchAuth"
+                type="button"
+            >
+                Sign up
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= CHAT APP ================= -->
+
+<div id="app" class="app">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="sidebar-header">
+
+            <div class="profile">
+
+                <div
+                    id="myAvatar"
+                    class="avatar"
+                >
+                    ?
+                </div>
+
+                <div
+                    id="myName"
+                    class="profile-name"
+                >
+                    User
+                </div>
+
+            </div>
+
+            <button
+                id="logout"
+                class="logout"
+                title="Logout"
+            >
+                ⎋
+            </button>
+
+        </div>
+
+        <div class="search">
+
+            <input
+                id="search"
+                type="search"
+                placeholder="Search users..."
+            >
+
+        </div>
+
+        <div
+            id="users"
+            class="users"
+        ></div>
+
+    </aside>
+
+
+    <!-- CHAT -->
+
+    <main class="chat">
+
+        <header class="chat-header">
+
+            <div
+                id="chatAvatar"
+                class="avatar"
+            >
+                ?
+            </div>
+
+            <div>
+
+                <div
+                    id="chatName"
+                    class="chat-user-name"
+                >
+                    Select a chat
+                </div>
+
+                <div
+                    id="chatStatus"
+                    class="chat-user-status"
+                >
+                    Choose someone to start chatting
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <section
+            id="messages"
+            class="messages"
+        >
+
+            <div class="welcome">
+
+                <div class="welcome-icon">
+                    💬
+                </div>
+
+                <h2>Your messages</h2>
+
+                <p>
+                    Select a user to start a conversation.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <form
+            id="composer"
+            class="composer"
+        >
+
+            <input
+                id="messageInput"
+                type="text"
+                placeholder="Type a message..."
+                autocomplete="off"
+                disabled
+            >
+
+            <button
+                class="send"
+                type="submit"
+                disabled
+            >
+                ➤
+            </button>
+
+        </form>
+
+    </main>
+
+</div>
+
+
+<script>
+
+    /*
+     * ==========================
+     * STATE
+     * ==========================
+     */
+
+    let socket = null;
+
+    let currentUser = null;
+    let selectedUser = null;
+    let allUsers = [];
+
+    let signupMode = false;
+
+
+    /*
+     * ==========================
+     * ELEMENTS
+     * ==========================
+     */
+
+    const authScreen =
+        document.getElementById("authScreen");
+
+    const app =
+        document.getElementById("app");
+
+    const authForm =
+        document.getElementById("authForm");
+
+    const authTitle =
+        document.getElementById("authTitle");
+
+    const authSubtitle =
+        document.getElementById("authSubtitle");
+
+    const authButton =
+        document.getElementById("authButton");
+
+    const authError =
+        document.getElementById("authError");
+
+    const switchAuth =
+        document.getElementById("switchAuth");
+
+    const switchText =
+        document.getElementById("switchText");
+
+    const emailInput =
+        document.getElementById("email");
+
+    const usernameInput =
+        document.getElementById("username");
+
+    const passwordInput =
+        document.getElementById("password");
+
+    const usersContainer =
+        document.getElementById("users");
+
+    const searchInput =
+        document.getElementById("search");
+
+    const messages =
+        document.getElementById("messages");
+
+    const messageInput =
+        document.getElementById("messageInput");
+
+    const composer =
+        document.getElementById("composer");
+
+    const sendButton =
+        document.querySelector(".send");
+
+    const myName =
+        document.getElementById("myName");
+
+    const myAvatar =
+        document.getElementById("myAvatar");
+
+    const chatName =
+        document.getElementById("chatName");
+
+    const chatAvatar =
+        document.getElementById("chatAvatar");
+
+    const chatStatus =
+        document.getElementById("chatStatus");
+
+    const logout =
+        document.getElementById("logout");
+
+
+    /*
+     * ==========================
+     * AUTH MODE
+     * ==========================
+     */
+
+    switchAuth.addEventListener(
+        "click",
+        () => {
+
+            signupMode = !signupMode;
+
+            authError.textContent = "";
+
+            if (signupMode) {
+
+                authTitle.textContent =
+                    "Create your account";
+
+                authSubtitle.textContent =
+                    "Join the conversation";
+
+                authButton.textContent =
+                    "Sign up";
+
+                emailInput.style.display =
+                    "block";
+
+                switchText.textContent =
+                    "Already have an account?";
+
+                switchAuth.textContent =
+                    "Login";
+
+            } else {
+
+                authTitle.textContent =
+                    "Welcome back";
+
+                authSubtitle.textContent =
+                    "Login to continue chatting";
+
+                authButton.textContent =
+                    "Login";
+
+                emailInput.style.display =
+                    "none";
+
+                switchText.textContent =
+                    "Don't have an account?";
+
+                switchAuth.textContent =
+                    "Sign up";
+            }
+        }
+    );
+
+
+    /*
+     * ==========================
+     * LOGIN / SIGNUP
+     * ==========================
+     */
+
+    authForm.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            authError.textContent = "";
+
+            const username =
+                usernameInput.value.trim();
+
+            const password =
+                passwordInput.value;
+
+            const email =
+                emailInput.value.trim();
+
+
+            try {
+
+                let response;
+
+                if (signupMode) {
+
+                    response = await fetch(
+                        "/signup",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+                            body: JSON.stringify({
+                                username,
+                                email,
+                                password
+                            })
+                        }
+                    );
+
+                } else {
+
+                    /*
+                     * OAuth2PasswordRequestForm
+                     * expects form data.
+                     */
+
+                    const form =
+                        new URLSearchParams();
+
+                    form.append(
+                        "username",
+                        username
+                    );
+
+                    form.append(
+                        "password",
+                        password
+                    );
+
+                    response = await fetch(
+                        "/login",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type":
+                                    "application/x-www-form-urlencoded"
+                            },
+                            body: form
+                        }
+                    );
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.detail ||
+                        "Authentication failed"
+                    );
+                }
+
+
+                /*
+                 * Your login endpoint should return:
+                 *
+                 * {
+                 *   "access_token": "...",
+                 *   "token_type": "bearer"
+                 * }
+                 */
+
+                if (signupMode) {
+
+                    /*
+                     * After signup, return to login.
+                     */
+
+                    signupMode = false;
+
+                    switchAuth.click();
+
+                    authError.textContent =
+                        "Account created. Please login.";
+
+                    return;
+                }
+
+
+                const token =
+                    data.access_token;
+
+                if (!token) {
+
+                    throw new Error(
+                        "No access token received."
+                    );
+                }
+
+
+                localStorage.setItem(
+                    "access_token",
+                    token
+                );
+
+
+                await startApp(token);
+
+            } catch (error) {
+
+                authError.textContent =
+                    error.message;
+            }
+        }
+    );
+
+
+    /*
+     * ==========================
+     * START APPLICATION
+     * ==========================
+     */
+     /*
+ * ==========================
+ * START APPLICATION
+ * ==========================
+ */
+
+async function startApp(token) {
+
+    authScreen.style.display = "none";
+    app.classList.add("visible");
+
+    /*
+     * Decode JWT to get current user ID.
+     */
+
+    try {
+
+        const payload =
+            JSON.parse(
+                atob(
+                    token.split(".")[1]
+                        .replace(/-/g, "+")
+                        .replace(/_/g, "/")
+                )
+            );
+
+        currentUser = {
+            id: Number(payload.sub)
+        };
+
+    } catch {
+
+        throw new Error(
+            "Invalid authentication token."
+        );
+    }
+
+
+    /*
+     * Display current user.
+     */
+
+    myName.textContent =
+        `User ${currentUser.id}`;
+
+    myAvatar.textContent =
+        String(currentUser.id).charAt(0);
+
+
+    /*
+     * Connect WebSocket.
+     */
+
+    connectSocket(token);
+
+
+    /*
+     * Load available users.
+     */
+
+    await loadUsers();
+}
+
+
+/*
+ * ==========================
+ * LOAD USERS
+ * ==========================
+ */
+
+async function loadUsers() {
+
+    try {
+
+        const token =
+            localStorage.getItem(
+                "access_token"
+            );
+
+        const response =
+            await fetch(
+                "/users",
+                {
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`
+                    }
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Could not load users."
+            );
+        }
+
+
+        const data =
+            await response.json();
+
+
+        /*
+         * Accept either:
+         *
+         * [
+         *     {...},
+         *     {...}
+         * ]
+         *
+         * or:
+         *
+         * {
+         *     "users": [...]
+         * }
+         */
+
+        allUsers =
+            Array.isArray(data)
+                ? data
+                : data.users || [];
+
+
+        /*
+         * Don't display yourself.
+         */
+
+        allUsers =
+            allUsers.filter(
+                user =>
+                    Number(user.id) !==
+                    Number(currentUser.id)
+            );
+
+
+        renderUsers(allUsers);
+
+    } catch (error) {
+
+        console.error(error);
+
+        usersContainer.innerHTML = `
+            <div style="
+                padding:25px;
+                text-align:center;
+                color:#8696a0;
+            ">
+                Could not load users
+            </div>
+        `;
+    }
+}
+
+
+/*
+ * ==========================
+ * RENDER USERS
+ * ==========================
+ */
+
+function renderUsers(users) {
+
+    usersContainer.innerHTML = "";
+
+
+    if (!users.length) {
+
+        usersContainer.innerHTML = `
+            <div style="
+                padding:25px;
+                text-align:center;
+                color:#8696a0;
+            ">
+                No users found
+            </div>
+        `;
+
+        return;
+    }
+
+
+    users.forEach(user => {
+
+        const element =
+            document.createElement("div");
+
+        element.className = "user";
+
+
+        const name =
+            user.username ||
+            user.name ||
+            `User ${user.id}`;
+
+
+        const firstLetter =
+            name.charAt(0).toUpperCase();
+
+
+        element.innerHTML = `
+            <div class="avatar">
+                ${escapeHtml(firstLetter)}
+            </div>
+
+            <div class="user-info">
+
+                <div class="user-name">
+                    ${escapeHtml(name)}
+                </div>
+
+                <div class="user-status">
+                    ${user.online
+                        ? "Online"
+                        : "Offline"}
+                </div>
+
+            </div>
+        `;
+
+
+        element.addEventListener(
+            "click",
+            () => selectUser(
+                user,
+                element
+            )
+        );
+
+
+        usersContainer.appendChild(
+            element
+        );
+
+    });
+}
+
+
+/*
+ * ==========================
+ * SEARCH
+ * ==========================
+ */
+
+searchInput.addEventListener(
+    "input",
+    () => {
+
+        const query =
+            searchInput.value
+                .trim()
+                .toLowerCase();
+
+
+        const filtered =
+            allUsers.filter(
+                user =>
+                    (
+                        user.username ||
+                        user.name ||
+                        ""
+                    )
+                    .toLowerCase()
+                    .includes(query)
+            );
+
+
+        renderUsers(filtered);
+    }
+);
+
+
+/*
+ * ==========================
+ * SELECT USER
+ * ==========================
+ */
+
+function selectUser(
+    user,
+    element
+) {
+
+    selectedUser = user;
+
+
+    /*
+     * Highlight selected user.
+     */
+
+    document
+        .querySelectorAll(".user")
+        .forEach(
+            item =>
+                item.classList.remove(
+                    "active"
+                )
+        );
+
+
+    element.classList.add(
+        "active"
+    );
+
+
+    /*
+     * Update chat header.
+     */
+
+    const name =
+        user.username ||
+        user.name ||
+        `User ${user.id}`;
+
+
+    chatName.textContent =
+        name;
+
+
+    chatAvatar.textContent =
+        name.charAt(0).toUpperCase();
+
+
+    chatStatus.textContent =
+        user.online
+            ? "Online"
+            : "Offline";
+
+
+    /*
+     * Clear current messages.
+     *
+     * We'll later replace this with
+     * loading conversation history.
+     */
+
+    messages.innerHTML = "";
+
+
+    /*
+     * Enable message input.
+     */
+
+    messageInput.disabled = false;
+
+    sendButton.disabled = false;
+
+
+    /*
+     * Mobile:
+     * open the selected conversation.
+     */
+
+    app.classList.add(
+        "chat-open"
+    );
+
+
+    messageInput.focus();
+}
+
+
+/*
+ * ==========================
+ * WEBSOCKET
+ * ==========================
+ */
+
+function connectSocket(token) {
+
+    if (socket) {
+        socket.close();
+    }
+
+
+    const protocol =
+        location.protocol === "https:"
+            ? "wss:"
+            : "ws:";
+
+
+    socket =
+        new WebSocket(
+            `${protocol}//${location.host}/ws?token=${encodeURIComponent(token)}`
+        );
+
+
+    socket.onopen = () => {
+
+        console.log(
+            "WebSocket connected"
+        );
+    };
+
+
+    socket.onmessage = event => {
+
+        try {
+
+            const data =
+                JSON.parse(
+                    event.data
+                );
+
+
+            /*
+             * Incoming message.
+             */
+
+            if (
+                data.type === "message"
+            ) {
+
+                receiveMessage(data);
+
+                return;
+            }
+
+
+            /*
+             * Message sent confirmation.
+             */
+
+            if (
+                data.type ===
+                "message_sent"
+            ) {
+
+                messageSent(data);
+
+                return;
+            }
+
+
+            /*
+             * Backend error.
+             */
+
+            if (
+                data.type === "error"
+            ) {
+
+                console.error(
+                    data.message
+                );
+
+                return;
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Invalid WebSocket data:",
+                error
+            );
+        }
+    };
+
+
+    socket.onclose = () => {
+
+        console.log(
+            "WebSocket disconnected"
+        );
+
+
+        /*
+         * Automatically reconnect.
+         */
+
+        setTimeout(
+            () => {
+
+                const token =
+                    localStorage.getItem(
+                        "access_token"
+                    );
+
+
+                if (token) {
+
+                    connectSocket(
+                        token
+                    );
+                }
+
+            },
+            3000
+        );
+    };
+
+
+    socket.onerror = error => {
+
+        console.error(
+            "WebSocket error:",
+            error
+        );
+    };
+}
+
+
+/*
+ * ==========================
+ * SEND MESSAGE
+ * ==========================
+ */
+
+composer.addEventListener(
+    "submit",
+    event => {
+
+        event.preventDefault();
+
+
+        if (
+            !socket ||
+            socket.readyState !==
+                WebSocket.OPEN
+        ) {
+            return;
+        }
+
+
+        if (!selectedUser) {
+            return;
+        }
+
+
+        const content =
+            messageInput.value.trim();
+
+
+        if (!content) {
+            return;
+        }
+
+
+        socket.send(
+            JSON.stringify({
+                receiver_id:
+                    Number(
+                        selectedUser.id
+                    ),
+
+                content: content
+            })
+        );
+
+
+        messageInput.value = "";
+
+        messageInput.focus();
+    }
+);
+
+
+/*
+ * ==========================
+ * RECEIVE MESSAGE
+ * ==========================
+ */
+
+function receiveMessage(data) {
+
+    /*
+     * If the sender is the person
+     * currently selected, display it.
+     */
+
+    if (
+        selectedUser &&
+        Number(data.sender_id) ===
+            Number(selectedUser.id)
+    ) {
+
+        addMessage(
+            data,
+            false
+        );
+
+        return;
+    }
+
+
+    /*
+     * Message belongs to another
+     * conversation.
+     *
+     * We can add unread badges later.
+     */
+
+    console.log(
+        "New message:",
+        data
+    );
+}
+
+
+/*
+ * ==========================
+ * MESSAGE SENT
+ * ==========================
+ */
+
+function messageSent(data) {
+
+    if (
+        !selectedUser ||
+        Number(data.receiver_id) !==
+            Number(selectedUser.id)
+    ) {
+        return;
+    }
+
+
+    addMessage(
+        data,
+        true
+    );
+}
+
+
+/*
+ * ==========================
+ * ADD MESSAGE
+ * ==========================
+ */
+
+function addMessage(
+    data,
+    sent
+) {
+
+    /*
+     * Remove welcome screen.
+     */
+
+    const welcome =
+        messages.querySelector(
+            ".welcome"
+        );
+
+
+    if (welcome) {
+        welcome.remove();
+    }
+
+
+    const element =
+        document.createElement("div");
+
+
+    element.className =
+        `message ${
+            sent
+                ? "sent"
+                : "received"
+        }`;
+
+
+    const text =
+        document.createElement("div");
+
+
+    text.className =
+        "message-text";
+
+
+    /*
+     * textContent prevents HTML
+     * injection through messages.
+     */
+
+    text.textContent =
+        data.content;
+
+
+    const time =
+        document.createElement("div");
+
+
+    time.className =
+        "message-time";
+
+
+    const now =
+        new Date();
+
+
+    time.textContent =
+        now.toLocaleTimeString(
+            [],
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
+
+
+    if (sent) {
+
+        const tick =
+            document.createElement(
+                "span"
+            );
+
+
+        tick.className =
+            "tick";
+
+
+        tick.textContent =
+            data.delivered
+                ? " ✓✓"
+                : " ✓";
+
+
+        time.appendChild(
+            tick
+        );
+    }
+
+
+    element.appendChild(
+        text
+    );
+
+
+    element.appendChild(
+        time
+    );
+
+
+    messages.appendChild(
+        element
+    );
+
+
+    /*
+     * Keep newest message visible.
+     */
+
+    messages.scrollTop =
+        messages.scrollHeight;
+}
+
+
+/*
+ * ==========================
+ * LOGOUT
+ * ==========================
+ */
+
+logout.addEventListener(
+    "click",
+    () => {
+
+        localStorage.removeItem(
+            "access_token"
+        );
+
+
+        if (socket) {
+
+            socket.close();
+
+            socket = null;
+        }
+
+
+        location.reload();
+    }
+);
+
+
+/*
+ * ==========================
+ * SECURITY HELPER
+ * ==========================
+ */
+
+function escapeHtml(value) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.textContent =
+        value;
+
+
+    return div.innerHTML;
+}
+
+
+/*
+ * ==========================
+ * RESTORE LOGIN
+ * ==========================
+ */
+
+window.addEventListener(
+    "load",
+    async () => {
+
+        const token =
+            localStorage.getItem(
+                "access_token"
+            );
+
+
+        if (!token) {
+            return;
+        }
+
+
+        try {
+
+            await startApp(
+                token
+            );
+
+        } catch {
+h
+            localStorage.removeItem(
+                "access_token"
+            );
+
+
+            authScreen.style.display =
+                "flex";
+
+
+            app.classList.remove(
+                "visible"
+            );
+        }
+    }
+);
+/*
+ * ==========================
+ * MESSAGE INPUT
+ * ==========================
+ */
+
+messageInput.addEventListener(
+    "keydown",
+    event => {
+        if (
+            event.key === "Enter" &&
+            !event.shiftKey
+        ) {
+            event.preventDefault();
+            composer.requestSubmit();
+        }
+    }
+);
+
+
+/*
+ * ==========================
+ * BACK TO CHATS — MOBILE
+ * ==========================
+ */
+
+function closeChat() {
+    app.classList.remove("chat-open");
+
+    selectedUser = null;
+
+    messageInput.disabled = true;
+    sendButton.disabled = true;
+
+    chatName.textContent =
+        "Select a chat";
+
+    chatStatus.textContent =
+        "Choose someone to start chatting";
+
+    chatAvatar.textContent = "?";
+}
+
+
+/*
+ * ==========================
+ * ONLINE STATUS
+ * ==========================
+ */
+
+function updateUserStatus(
+    userId,
+    online
+) {
+    const user =
+        allUsers.find(
+            item =>
+                Number(item.id) ===
+                Number(userId)
+        );
+
+    if (!user) return;
+
+    user.online = online;
+
+    const query =
+        searchInput.value
+            .trim()
+            .toLowerCase();
+
+    const filtered =
+        allUsers.filter(
+            item =>
+                (
+                    item.username ||
+                    item.name ||
+                    ""
+                )
+                    .toLowerCase()
+                    .includes(query)
+        );
+
+    renderUsers(filtered);
+
+    if (
+        selectedUser &&
+        Number(selectedUser.id) ===
+            Number(userId)
+    ) {
+        chatStatus.textContent =
+            online
+                ? "Online"
+                : "Offline";
+    }
+}
+
+
+/*
+ * ==========================
+ * CLEAR CHAT
+ * ==========================
+ */
+
+function clearMessages() {
+
+    messages.innerHTML = `
+        <div class="welcome">
+
+            <div class="welcome-icon">
+                💬
+            </div>
+
+            <h2>
+                Your messages
+            </h2>
+
+            <p>
+                Send a message to start
+                the conversation.
+            </p>
+
+        </div>
+    `;
+}
+
+
+/*
+ * ==========================
+ * AUTH STATE CHECK
+ * ==========================
+ */
+
+async function checkAuthentication() {
+
+    const token =
+        localStorage.getItem(
+            "access_token"
+        );
+
+    if (!token) {
+        return false;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                "/users/me",
+                {
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`
+                    }
+                }
+            );
+
+        if (!response.ok) {
+
+            localStorage.removeItem(
+                "access_token"
+            );
+
+            return false;
+        }
+
+        return true;
+
+    } catch {
+
+        return false;
+    }
+}
+
+
+/*
+ * ==========================
+ * PAGE VISIBILITY
+ * ==========================
+ */
+
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        if (
+            document.visibilityState ===
+            "visible"
+        ) {
+
+            if (
+                socket &&
+                socket.readyState !==
+                    WebSocket.OPEN
+            ) {
+
+                const token =
+                    localStorage.getItem(
+                        "access_token"
+                    );
+
+                if (token) {
+                    connectSocket(token);
+                }
+            }
+        }
+    }
+);
+
+
+/*
+ * ==========================
+ * PREVENT EMPTY SENDS
+ * ==========================
+ */
+
+messageInput.addEventListener(
+    "input",
+    () => {
+
+        const hasText =
+            messageInput.value
+                .trim()
+                .length > 0;
+
+        sendButton.disabled =
+            !hasText ||
+            !selectedUser ||
+            !socket ||
+            socket.readyState !==
+                WebSocket.OPEN;
+    }
+);
+
+
+/*
+ * ==========================
+ * SOCKET STATE
+ * ==========================
+ */
+
+function updateSendButton() {
+
+    const hasText =
+        messageInput.value
+            .trim()
+            .length > 0;
+
+    const connected =
+        socket &&
+        socket.readyState ===
+            WebSocket.OPEN;
+
+    sendButton.disabled =
+        !hasText ||
+        !selectedUser ||
+        !connected;
+}
+
+
+/*
+ * ==========================
+ * PERIODIC SOCKET CHECK
+ * ==========================
+ */
+
+setInterval(
+    () => {
+        updateSendButton();
+    },
+    1000
+);
+
+
+/*
+ * ==========================
+ * INITIAL SEND BUTTON STATE
+ * ==========================
+ */
+
+updateSendButton();
+
+
+/*
+ * ==========================
+ * CLEANUP
+ * ==========================
+ */
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        if (socket) {
+            socket.close();
+        }
+    }
+);
+
+
+/*
+ * ==========================
+ * CLOSE CHAT WITH ESCAPE
+ * ==========================
+ */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Escape" &&
+            window.innerWidth <= 768 &&
+            selectedUser
+        ) {
+            closeChat();
+        }
+    }
+);
+
+
+/*
+ * ==========================
+ * FINAL HTML CLOSING TAGS
+ * ==========================
+ */
+
+</script>
+
+</body>
+</html>
+
+   
