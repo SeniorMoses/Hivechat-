@@ -1,36 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from auth import (
-    create_access_token,
-    hash_password,
-    verify_password,
-    get_current_user
-)
-from database import get_db
-from models import User
-from schemas import (
-    LoginRequest,
-    SignupRequest,
-    LoginResponse,
-)
-from websocket import manager
-
-router = APIRouter()
-
-
 @router.post("/signup", response_model=LoginResponse)
 async def signup(
     data: SignupRequest,
     db: AsyncSession = Depends(get_db),
 ):
+    print("1. SIGNUP STARTED")
+
     result = await db.execute(
         select(User).where(
             (User.username == data.username)
             | (User.email == data.email)
         )
     )
+
+    print("2. DATABASE QUERY WORKED")
 
     existing_user = result.scalar_one_or_none()
 
@@ -39,7 +21,13 @@ async def signup(
             status_code=400,
             detail="Username or email already exists",
         )
-    hashed=await hash_password(data.password)
+
+    print("3. USER DOES NOT EXIST")
+
+    hashed = await hash_password(data.password)
+
+    print("4. PASSWORD HASHED")
+
     user = User(
         username=data.username,
         email=data.email,
@@ -48,69 +36,21 @@ async def signup(
 
     db.add(user)
 
+    print("5. USER ADDED")
+
     await db.commit()
+
+    print("6. DATABASE COMMIT WORKED")
+
     await db.refresh(user)
 
+    print("7. USER REFRESHED")
+
     token = create_access_token(user.id)
+
+    print("8. TOKEN CREATED")
 
     return {
         "access_token": token,
         "token_type": "bearer",
     }
-
-
-@router.post("/login", response_model=LoginResponse)
-async def login(
-    data: LoginRequest,
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(User).where(
-            User.username == data.username
-        )
-    )
-
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid username or password",
-        )
-
-    if not await verify_password(
-        data.password,
-        user.password_hash,
-    ):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid credentials",
-        )
-
-    token = create_access_token(user.id)
-
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-    }
-    
-@router.get("/users/{user_id}/status")
-async def user_status(user_id: int):
-
-    return {
-        "user_id": user_id,
-        "online": manager.is_online(user_id),
-    }
-    
-@router.get("/users")
-async def get_users(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(
-        select(User).where(
-            User.id != current_user.id
-        )
-    )
-
-    return result.scalars().all()
