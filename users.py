@@ -13,7 +13,7 @@ from models import User
 from schemas import (
     LoginRequest,
     SignupRequest,
-    TokenResponse,
+    LoginResponse,
 )
 from websocket import manager
 
